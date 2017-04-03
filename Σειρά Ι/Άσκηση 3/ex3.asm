@@ -12,7 +12,7 @@
 jmp start	    ; start the program
 
 ;data -------------
-limit:  equ 63h	    ; 0x63 = 99 (decimal)
+EQU limit, 63h	    ; 0x63 = 99 (decimal)
 ;------------------
 
 ;code -------------
@@ -52,4 +52,5 @@ DELAY:  nop
 	ret
 
 hlt		    ; halt program
+END
 ; -----[ EOF ]---
