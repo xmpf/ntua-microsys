@@ -5,8 +5,8 @@
 
 module Schematic4_23G (x, y, V, D);
     output reg x, y, V;
-    input reg[3:0] D;
-    always @(D[0], D[1], D[2], D[3]) begin
+    input [3:0] D;
+    always @(D) begin
       case (D) // table 4.8 page 156
         4'b0000: {x, y, V} = 3'bxx0;
         4'b1000: {x, y, V} = 3'b001;
