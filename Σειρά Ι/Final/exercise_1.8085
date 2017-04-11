@@ -1,0 +1,14 @@
+START:	MVI	C,08H	;labels must be followed by an instruction
+		LDA	2000H 	;load ACCUMULATOR = MEM[0x2000] (INPUT PORT)
+
+L1:		RAL			;rotate ACCUMULATOR left
+		JC	L2		;jump @L2 if CARRY flag is set
+		DCR	C		;decrement C
+		JNZ	L1		;jump @L1 if not flag ZERO is set to 1
+
+L2:		MOV	A,C		;move contents of C to A
+		CMA			;complement ACCUMULATOR: A = ~A
+		STA	3000H	;store contents of A at address 0x3000 (OUTPUT PORT)
+		RST	1
+
+END

@@ -1,0 +1,35 @@
+		EQU	LIMIT,64H	;0x64 = 100 (decimal)
+		LXI	B,01F4H	;for use in DELB routine – delay 500ms
+
+START:	LDA	2000H	;read from INPUT port
+		CPI	LIMIT	;compare input with 100
+		JNC	TOGGLE	;(input > 100) ? toggleLeds() : continue
+		MVI	D,FFH	;use D register as a counter  
+		
+;process the number
+DECA:	INR	D		;initialize D = 0xff + 0x01 = 0x00
+		SUI	0AH		;subtract 10
+		JNC	DECA	;(num > 0) ? goto DECA : continue
+		ADI	0AH		;fix quotient (accumulator)
+		MOV	E,A		;E <= Accumulator (E: temp var)
+		MOV	A,D		;Accumulator <= <DECADES>
+		RLC			;move LSB to MSB
+		RLC			;by rotating bits left
+		RLC			;we need a total of four (4)
+		RLC			;rotate operations
+		ADD E		;now ACCUM holds <DECADES> in MSB and <UNITS> in LSB
+		CMA			;Complement ACCUMULATOR (A = ~A) for LEDS
+		STA	3000H	;print to OUTPUT port
+		JMP	START	;loop from start
+	
+;toggleLeds() :: remember that a led is turned ON
+;when the respective output line is set LOW	
+TOGGLE:	MVI	A,0FH	; set ACCUMULATOR = 00001111 – MSB on
+		STA	3000H	; store OUTPUT (MSB leds ON)
+		CALL DELB	; delay 500ms
+		CMA			; Complement Accumulator => set ACCUMULATOR = 11110000
+		STA	3000H	; store OUTPUT (LSB leds ON)
+		CALL DELB	
+		JMP	START	
+
+END

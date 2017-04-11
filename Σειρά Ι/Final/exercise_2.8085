@@ -1,0 +1,31 @@
+;Apo to programma loipoun ta sxolia epeidh ta 
+;egrapsa sta ellhnika kai logw kwdikopoihshs 
+;den mporousan na metafer8oun ston prosomoiwth
+;Gia na ta deite parakalw koita3te sthn anafora.
+
+		IN	10H
+		MVI	A,FEH		
+		STA 3000H		
+		LXI	B,01F4H	 
+
+AGAIN:	MOV	D,A		
+STOP:	CALL DELB
+		LDA	2000H
+		ANI	01H		
+		JNZ	STOP		
+
+		LDA	2000H
+		ANI	80H		
+		JZ	LEFT		
+
+		MOV	A,D
+		RRC			
+		STA	3000H		
+		JMP	AGAIN
+
+LEFT:	MOV	A,D
+		RLC			
+		STA	3000H		
+		JMP	AGAIN
+
+END
