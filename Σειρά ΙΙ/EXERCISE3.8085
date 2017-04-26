@@ -6,75 +6,74 @@
 ; X[0] = X[1] ^ (A[0] | B[0])
 
 
-START:	LDA 2000H		; READ INPUT
-						; ACCUMULATOR: A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
-		MOV B,A 		; BC = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
-		PUSH B 			; [--SP] = BC = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+START:  LDA 2000H       ; READ INPUT
+                        ; ACCUMULATOR: A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+        MOV B,A         ; B = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+        PUSH B          ; [--SP] = BC = * * * * * * * * A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
 
-		RRC				; ROTATE ACCUMULATOR RIGHT CIRCULAR
-						; ACCUMULATOR = B[0] A[3] B[3] A[2] B[2] A[1] B[1] A[0]
-		ANA B			; A = A (AND) BC
-						;   = (A[3]&B[0]) (B[3]&A[3]) (A[2]&B[3]) (B[2]&A[2]) (A[1]&B[1]) (B[1]&A[1]) (A[0]&B[1]) (B[0]&A[0])
+        RRC             ; ROTATE ACCUMULATOR RIGHT CIRCULAR
+                        ; ACCUMULATOR = B[0] A[3] B[3] A[2] B[2] A[1] B[1] A[0]
+        ANA B           ; A = A (AND) B
+                        ;   = (A[3]&B[0]) (B[3]&A[3]) (A[2]&B[3]) (B[2]&A[2]) (A[1]&B[1]) (B[1]&A[1]) (A[0]&B[1]) (B[0]&A[0])
 
-		ANI 55H 		; MASK OFF UNINTERESTED BITS
-						; A = * (B[3]&A[3]) * (B[2]&A[2]) * (B[1]&A[1]) * (B[0]&A[0])
-						;     0		1		0		1	  0		1		0	1 = 0x55
+        ANI 55H         ; MASK OFF UNINTERESTED BITS
+                        ; A = * (B[3]&A[3]) * (B[2]&A[2]) * (B[1]&A[1]) * (B[0]&A[0])
+                        ;     0     1       0       1     0     1       0   1 = 0x55
 
-		MOV B,A 		; BC = 0 (B[3]&A[3]) 0 (B[2]&A[2]) 0 (B[1]&A[1]) 0 (B[0]&A[0])
-						; TEMPORARY VARIABLE
-		PUSH B 			; [--SP] = BC = 0 (B[3]&A[3]) 0 (B[2]&A[2]) 0 (B[1]&A[1]) 0 (B[0]&A[0])
+        MOV B,A         ; B = 0 (B[3]&A[3]) 0 (B[2]&A[2]) 0 (B[1]&A[1]) 0 (B[0]&A[0])
+                        ; TEMPORARY VARIABLE
+        PUSH B          ; [--SP] = BC = * * * * * * * * 0 (B[3]&A[3]) 0 (B[2]&A[2]) 0 (B[1]&A[1]) 0 (B[0]&A[0])
 
-		ANI 40H			; MASK OFF ALL BUT (B[3]&A[3])
-						; A = 0 (B[3]&A[3]) 0 0 0 0 0 0
-		RRC
-		RRC
-		RRC				; A  = 0 0 0 0 X[3] 0 0 0
-		MOV D,A 	  	; DE = 0 0 0 0 X[3] 0 0 0
-		POP B 			; BC = [SP++] = 0 (B[3]&A[3]) 0 (B[2]&A[2]) 0 (B[1]&A[1]) 0 (B[0]&A[0])
-		MOV A,B 		; A = BC = 0 X[3] 0 X[2] 0 (B[1]&A[1]) 0 (B[0]&A[0])
-		ANI 10H			; MASK OFF ALL BUT X[2] = (B[2]&A[2])
-						; A = 0 0 0 X[2] 0 0 0 0
-		RRC				; ROTATE ACCUMULATOR RIGHT CYCLIC
-		RRC				; A = 0 0 0 0 0 X[2] 0 0
-		MOV B,D 		; BC = DE = 0 0 0 0 X[3] 0 0 0
-		ADD B 			; A += B => A = 0 0 0 0 X[3] X[2] 0 0
-		
-		MOV B,A 	 	; BC = A = 0 0 0 0 X[3] X[2] 0 0
-		POP D 			; DE = [SP++] = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
-		PUSH B 			; [--SP] = BC = 0 0 0 0 X[3] X[2] 0 0
+        ANI 40H         ; MASK OFF ALL BUT (B[3]&A[3])
+                        ; A = 0 (B[3]&A[3]) 0 0 0 0 0 0
+        RRC
+        RRC
+        RRC             ; A  = 0 0 0 0 X[3] 0 0 0
+        MOV D,A         ; D  = 0 0 0 0 X[3] 0 0 0
+        POP B           ; BC = [SP++] = * * * * * * * * 0 (B[3]&A[3]) 0 (B[2]&A[2]) 0 (B[1]&A[1]) 0 (B[0]&A[0])
+        MOV A,B         ; A = B = 0 X[3] 0 X[2] 0 (B[1]&A[1]) 0 (B[0]&A[0])
+        ANI 10H         ; MASK OFF ALL BUT X[2] = (B[2]&A[2])
+                        ; A = 0 0 0 X[2] 0 0 0 0
+        RRC             ; ROTATE ACCUMULATOR RIGHT CYCLIC
+        RRC             ; A = 0 0 0 0 0 X[2] 0 0
+        MOV B,D         ; B = D = 0 0 0 0 X[3] 0 0 0
+        ADD B           ; A += B => A = 0 0 0 0 X[3] X[2] 0 0
+        
+        MOV B,A         ; BC = A = 0 0 0 0 X[3] X[2] 0 0
+        POP D           ; DE = [SP++] = * * * * * * * * A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+        PUSH B          ; [--SP] = BC = * * * * * * * * 0 0 0 0 X[3] X[2] 0 0
 
 
-		MOV A,D 		; A = BC = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
-		RRC				; ROTATE RIGHT CIRCULAR
-						; A  = B[0] A[3] B[3] A[2] B[2] A[1] B[1] A[0]
-						; BC = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+        MOV A,D         ; A = D = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+        RRC             ; ROTATE RIGHT CIRCULAR
+                        ; A  = B[0] A[3] B[3] A[2] B[2] A[1] B[1] A[0]
+                        ; D  = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
 
-		ORA B 			; A  = (B[0] | A[3]) (A[3] | B[3]) (B[3] | A[2]) (A[2] | B[2]) (B[2] | A[1]) (A[1] | B[1]) (B[1] | A[0]) (A[0] | B[0])
-		MOV D,A 		; DE = (B[0] | A[3]) (A[3] | B[3]) (B[3] | A[2]) (A[2] | B[2]) (B[2] | A[1]) (A[1] | B[1]) (B[1] | A[0]) (A[0] | B[0])
+        ORA D           ; A  = (B[0] | A[3]) (A[3] | B[3]) (B[3] | A[2]) (A[2] | B[2]) (B[2] | A[1]) (A[1] | B[1]) (B[1] | A[0]) (A[0] | B[0])
+        MOV D,A         ; D  = (B[0] | A[3]) (A[3] | B[3]) (B[3] | A[2]) (A[2] | B[2]) (B[2] | A[1]) (A[1] | B[1]) (B[1] | A[0]) (A[0] | B[0])
 
-		ANI 04H			; MASK OFF ALL BUT (B[1] | A[1])
-						; A = 0 0 0 0 0 X[1] 0 0
-		RRC				; ROTATE RIGHT CIRCULAR 
-						; A = 0 0 0 0 0 0 X[1] 0
-		POP B 			; BC = [SP++] = 0 0 0 0 X[3] X[2] 0 0
-		ADD B 			; A += BC = 0 0 0 0 X[3] X[2] X[1] 0
-		PUSH B 			; [--SP] = BC = 0 0 0 0 X[3] X[2] X[1] 0
+        ANI 04H         ; MASK OFF ALL BUT (B[1] | A[1])
+                        ; A = 0 0 0 0 0 X[1] 0 0
+        RRC             ; ROTATE RIGHT CIRCULAR 
+                        ; A = 0 0 0 0 0 0 X[1] 0
+        POP B           ; BC = [SP++] = * * * * * * * * 0 0 0 0 X[3] X[2] 0 0
+        ADD B           ; A += B = 0 0 0 0 X[3] X[2] X[1] 0
+        PUSH B          ; [--SP] = BC = * * * * * * * * 0 0 0 0 X[3] X[2] X[1] 0
 
-		MOV A,D 		; A = DE = (B[0] | A[3]) (A[3] | B[3]) (B[3] | A[2]) (A[2] | B[2]) (B[2] | A[1]) X[1] (B[1] | A[0]) (A[0] | B[0])
-						; Y[0] = (A[0] | B[0])
-		ANI 01H 		; MASK ALL OFF EXCEPT Y[0]
-						; A  = 0 0 0 0 0 0 0 Y[0]
-		MOV D,A 		; DE = 0 0 0 0 0 0 0 Y[0]
-		POP B 			; BC = [SP++] = 0 0 0 0 X[3] X[2] X[1] 0
-		
-		MOV A,B 		; A = BC = 0 0 0 0 X[3] X[2] X[1] 0
-		RRC				; A = 0 0 0 0 0 X[3] X[2] X[1]
-		ANI 01H 		; A = 0 0 0 0 0 0 0 X[1]
-		XRA D			; A = 0 0 0 0 0 0 0 (Y[0] ^ X[1]) = 0 0 0 0 0 0 0 X[0]
-		
-		ADD B 			; A += BC => A = 0 0 0 0 X[3] X[2] X[1] X[0]
-		MOV A,B
-		CMA				; COMPLEMENT ACCUM -- A = ~A
-		STA 3000H		; OUTPUT
-		JMP START		; UNCONDITIONAL JUMP -- START OVER
+        MOV A,D         ; A = D = (B[0] | A[3]) (A[3] | B[3]) (B[3] | A[2]) (A[2] | B[2]) (B[2] | A[1]) X[1] (B[1] | A[0]) (A[0] | B[0])
+                        ; Y[0] = (A[0] | B[0])
+        ANI 01H         ; MASK ALL OFF EXCEPT Y[0]
+                        ; A  = 0 0 0 0 0 0 0 Y[0]
+        MOV D,A         ; D  = 0 0 0 0 0 0 0 Y[0]
+        POP B           ; BC = [SP++] = * * * * * * * * 0 0 0 0 X[3] X[2] X[1] 0
+        
+        MOV A,B         ; A = B = 0 0 0 0 X[3] X[2] X[1] 0
+        RRC             ; A = 0 0 0 0 0 X[3] X[2] X[1]
+        ANI 01H         ; A = 0 0 0 0 0 0 0 X[1]
+        XRA D           ; A = 0 0 0 0 0 0 0 (Y[0] ^ X[1]) = 0 0 0 0 0 0 0 X[0]
+        
+        ADD B           ; A += B => A = 0 0 0 0 X[3] X[2] X[1] X[0]
+        CMA             ; COMPLEMENT ACCUM -- A = ~A
+        STA 3000H       ; OUTPUT
+        JMP START       ; UNCONDITIONAL JUMP -- START OVER
 END
