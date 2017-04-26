@@ -1,0 +1,50 @@
+START:	LDA 2000H	; READ INPUT :: A = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+		MOV B,A		; COPY INPUT INTO B REGISTER
+		RRC			; ROTATE ACCUMULATOR RIGHT CYCLIC :: A = B[0] A[3] B[3] A[2] B[2] A[1] B[1] A[0]
+
+GATE_1:	MOV C,A 	; COPY ACCUMULATOR INTO C REGISTER
+		ANA B 		; A = A & B = (A[3] & B[0]) (B[3] & A[3]) (A[2] & B[3]) (B[2] & A[2]) (A[1] & B[1]) (B[1] & A[1]) (A[0] & B[1]) (B[0] & A[0])
+		RAL			; CY = A[3] & B[0]
+		RAL			; CY = B[3] & A[3]
+		JC BIT_3	; IF (CY == 1) => ADD 1000 TO TEMPORARY VARIABLE D
+		MVI D,00H	; ELSE D = 0000 0000
+		JMP GATE_2 	; UNCONDITIONAL JUMP
+BIT_3:	MVI D,08H	; D = 0000 1000
+
+GATE_2:	RAL			; CY = A[2] & B[3]
+		RAL			; CY = B[2] & A[2]
+		JC BIT_2	; IF (CY == 1) => ADD 0100 TO TEMPORARY VARIABLE E
+		MVI E,00H 	; ELSE E = 0000 0000
+		JMP GATE_3 	; UNCONDITIONAL JUMP
+BIT_2:  MVI E,04H	; E = 0000 0100
+
+GATE_3: MOV A,B 	; RELOAD INPUT INTO ACCUMULATOR
+					; A = A[3] B[3] A[2] B[2] A[1] B[1] A[0] B[0]
+		RLC			; ROTATE ACCUMULATOR LEFT CYCLIC
+					; A = B[3] A[2] B[2] A[1] B[1] A[0] B[0] A[3]
+		ORA B 		; A = A | B
+					; A = (A[3] | B[3]) (B[3] | A[2]) (A[2] | B[2]) (B[2] | A[1]) (A[1] | B[1]) * * *
+		RAR			;
+		RAR			;
+		RAR			;
+		RAR			; CY = A[1] | B[1]
+		JC BIT_1 	; IF (CY == 1) => ADD 0010 TO TEMPORARY VARIABLE C
+		MVI C,00H 	; ELSE C = 0000 0000
+		JMP GATE_4 	; UNCONDITIONAL JUMP
+BIT_1:  MVI C,02H	; C = 0000 0010
+
+GATE_4: RAL
+		RAL			; CY = A[0] | B[0]
+		MVI A,00H	; A = 0000 0000
+		ADC A 		; A = CY
+
+FINAL:	MOV H,A 	; COPY A INTO REGISTER H
+		MOV A,C 	; COPY C INTO REGISTER A
+		RRC 		; ROTATE ACCUMULATOR RIGHT CIRCULAR
+		XRA H 		; A = A XOR H
+		ADD C  		; A += C
+		ADD E 		; A += E
+		ADD D		; A += D
+		CMA			; NEGATIVE LOGIC OF mLAB
+		STA 3000H 	; OUTPUT RESULT
+END
